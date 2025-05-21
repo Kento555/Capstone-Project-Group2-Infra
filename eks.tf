@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ce-grp-2-eks" {
-  name = "${local.env}-${local.eks_name}-ce-grp-2-eks-cluster"
+  name = "${var.env}-${var.eks_name}-ce-grp-2-eks-cluster"
 
   assume_role_policy = <<POLICY
 {
@@ -23,8 +23,8 @@ resource "aws_iam_role_policy_attachment" "ce-grp-2-eks" {
 }
 
 resource "aws_eks_cluster" "ce-grp-2-eks" {
-  name     = "${local.env}-${local.eks_name}"
-  version  = local.eks_version
+  name     = "${var.env}-${var.eks_name}"
+  version  = var.eks_version
   role_arn = aws_iam_role.ce-grp-2-eks.arn
 
   vpc_config {
