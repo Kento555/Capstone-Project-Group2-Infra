@@ -11,6 +11,7 @@ env:
   AWS_REGION: "us-east-1"
   EKS_CLUSTER_NAME: "ce-grp-2-dev-ce-grp-2-eks"
   TERRAFORM_VERSION: "1.7.4"
+  TF_WORKING_DIR: "./terraform"
 
 jobs:
   CI:
@@ -32,10 +33,9 @@ jobs:
       with:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-# Checks code before applying
-
     - name: Terraform fmt
       run: terraform fmt -check
+      working-directory: ${{ env.TF_WORKING_DIR }}
 
     - uses: terraform-linters/setup-tflint@v3
       with:
@@ -46,9 +46,11 @@ jobs:
 
     - name: Init TFLint
       run: tflint --init
+      working-directory: ${{ env.TF_WORKING_DIR }}
 
     - name: Run TFLint
       run: tflint -f compact
+      working-directory: ${{ env.TF_WORKING_DIR }}
 
     # - name: Checkov
     #   uses: bridgecrewio/checkov-action@master
@@ -57,16 +59,17 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
+      working-directory: ${{ env.TF_WORKING_DIR }}
        
     - name: Terraform Validate
       run: terraform validate
+      working-directory: ${{ env.TF_WORKING_DIR }}
       
     - name: Terraform Plan
       run: terraform plan
+      working-directory: ${{ env.TF_WORKING_DIR }}
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve
-
-   
-
+      working-directory: ${{ env.TF_WORKING_DIR }}

@@ -1,3 +1,7 @@
+###########################################################
+######                  CloudWatch                   ######
+###########################################################
+
 # Create CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "ce-grp-2-vpc_flow_logs" {
   name              = "/aws/vpc/${aws_vpc.ce-grp-2-vpc.id}/flow-logs"
