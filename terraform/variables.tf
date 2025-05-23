@@ -41,7 +41,7 @@ variable "eks_version" {
 variable "ecr_namespace" {
   type    = string
   default = "ecr"
-  
+
 }
 
 variable "microservices" {
@@ -57,5 +57,5 @@ variable "microservices" {
     "recommendationservice",
     "shippingservice",
     "shoppingassistantservice",
-    "loadgenerator"]
+  "loadgenerator"]
 }
