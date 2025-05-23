@@ -7,9 +7,9 @@ on:
         type: choice
         description: Select the environment
         options:
-        - dev
-        - uat
-        - prod
+          - dev
+          - uat
+          - prod
 
 jobs:
   terraform-create:
@@ -21,10 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: print environment
-        run: | 
-          echo "env choice is ${{ github.event.inputs.choice }}"
- 
+      - name: Print environment
+        run: echo "env choice is ${{ github.event.inputs.choice }}"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -35,22 +34,53 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-         terraform_version: 1.7.5
+          terraform_version: 1.7.5
 
-      - name: Terraform init
+      - name: Terraform Init
         run: terraform init
 
-      - name: Terraform workspace list
-        run: terraform workspace list
-
-      - name: Terraform select workspace environment
+      - name: Select or create workspace
         run: |
           terraform workspace select ${{ github.event.inputs.choice }} || terraform workspace new ${{ github.event.inputs.choice }}
-          terraform workspace list
 
-      - name: Terraform plan
+      - name: Terraform Plan
         run: terraform plan -var-file=${{ github.event.inputs.choice }}.tfvars
 
-      - name: Terraform apply
+      - name: Terraform Apply
         run: terraform apply -var-file=${{ github.event.inputs.choice }}.tfvars -auto-approve
 
+  terraform-destroy-on-failure:
+    needs: terraform-create
+    if: failure()
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print failure reason
+        run: echo "terraform-create failed — triggering destroy to clean up partial resources"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Select or create workspace
+        run: |
+          terraform workspace select ${{ github.event.inputs.choice }} || terraform workspace new ${{ github.event.inputs.choice }}
+
+      - name: Terraform Destroy
+        run: terraform destroy -var-file=${{ github.event.inputs.choice }}.tfvars -auto-approve
