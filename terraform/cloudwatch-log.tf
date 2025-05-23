@@ -1,20 +1,16 @@
-###########################################################
-######                  CloudWatch                   ######
-###########################################################
-
 # Create CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "ce-grp-2-vpc_flow_logs" {
   name              = "/aws/vpc/${aws_vpc.ce-grp-2-vpc.id}/flow-logs"
   retention_in_days = 30 # Adjust retention as needed (1-3653)
 
   tags = {
-    Name = "${var.env}-ce-grp-2-vpc-flow-logs"
+    Name = "${var.name_prefix}-vpc-flow-logs-${var.env}"
   }
 }
 
 # IAM Role for VPC Flow Logs
 resource "aws_iam_role" "ce-grp-2-vpc_flow_log_role" {
-  name = "${var.env}-ce-grp-2-vpc-flow-log-role"
+  name = "${var.name_prefix}-vpc-flow-log-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -26,13 +22,13 @@ resource "aws_iam_role" "ce-grp-2-vpc_flow_log_role" {
   })
 
   tags = {
-    Name = "${var.env}-ce-grp-2-vpc-flow-log-role"
+    Name = "${var.name_prefix}-vpc-flow-log-role-${var.env}"
   }
 }
 
 # IAM Policy for Flow Logs
 resource "aws_iam_role_policy" "ce-grp-2-vpc_flow_log_policy" {
-  name = "${var.env}-ce-grp-2-vpc-flow-log-policy"
+  name = "${var.name_prefix}-vpc-flow-log-policy"
   role = aws_iam_role.ce-grp-2-vpc_flow_log_role.id
 
   policy = jsonencode({
@@ -59,6 +55,6 @@ resource "aws_flow_log" "ce-grp-2-vpc_flow_log" {
   iam_role_arn         = aws_iam_role.ce-grp-2-vpc_flow_log_role.arn
 
   tags = {
-    Name = "${var.env}-ce-grp-2-vpc-flow-log"
+    Name = "${var.name_prefix}-vpc-flow-log"
   }
 }

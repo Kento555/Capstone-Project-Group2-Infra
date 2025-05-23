@@ -2,7 +2,7 @@
 ######                    EKS                        ######
 ###########################################################
 resource "aws_iam_role" "ce-grp-2-eks" {
-  name = "${var.env}-${var.eks_name}-ce-grp-2-eks-cluster"
+  name = "${var.name_prefix}-${var.eks_name}-iam-${var.env}"
 
   assume_role_policy = <<POLICY
 {
@@ -26,8 +26,8 @@ resource "aws_iam_role_policy_attachment" "ce-grp-2-eks" {
 }
 
 resource "aws_eks_cluster" "ce-grp-2-eks" {
-  name     = "${var.env}-${var.eks_name}"
-  version  = var.eks_version
+  name     = "${var.name_prefix}-${var.eks_name}-${var.env}"
+  version  = var.aws_region
   role_arn = aws_iam_role.ce-grp-2-eks.arn
 
   vpc_config {
@@ -146,3 +146,4 @@ resource "aws_eks_node_group" "ce-grp-2-aws_eks_node_group" {
     ignore_changes = [scaling_config[0].desired_size]
   }
 }
+

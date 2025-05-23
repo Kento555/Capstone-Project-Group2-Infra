@@ -8,7 +8,7 @@ resource "aws_vpc" "ce-grp-2-vpc" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "${var.env}-ce-grp-2-vpc"
+    Name = "${var.name_prefix}-vpc-${var.env}"
   }
 }
 
@@ -17,7 +17,7 @@ resource "aws_internet_gateway" "ce-grp-2-igw" {
   vpc_id = aws_vpc.ce-grp-2-vpc.id
 
   tags = {
-    Name = "${var.env}-ce-grp-2-igw"
+    Name = "${var.name_prefix}-igw-${var.env}"
   }
 }
 
@@ -31,7 +31,7 @@ resource "aws_route_table" "ce-grp-2-private" {
   }
 
   tags = {
-    Name = "${var.env}-ce-grp-2-private"
+    Name = "${var.name_prefix}-private-${var.env}"
 
   }
 }
@@ -45,7 +45,7 @@ resource "aws_route_table" "ce-grp-2-public" {
   }
 
   tags = {
-    Name = "${var.env}-ce-grp-2-public"
+    Name = "${var.name_prefix}-public-${var.env}"
   }
 }
 
