@@ -1,3 +1,4 @@
+---
 name: Terraform CI
 
 on:
@@ -17,7 +18,6 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: use-east-1
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -26,7 +26,8 @@ jobs:
 
     - name: Terraform fmt
       run: terraform fmt -check
- 
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
     - uses: terraform-linters/setup-tflint@v3
       with:
         tflint_version: latest
@@ -37,23 +38,29 @@ jobs:
     - name: Init TFLint
       run: tflint --init
       working-directory: ${{ env.TF_WORKING_DIR }}
-    
 
     - name: Run TFLint
       run: tflint -f compact
       working-directory: ${{ env.TF_WORKING_DIR }}
 
+    # - name: Checkov
+    #   uses: bridgecrewio/checkov-action@master
+    #   with:
+    #     framework: terraform
 
     - name: Terraform Init
       run: terraform init
       working-directory: ${{ env.TF_WORKING_DIR }}
-
        
     - name: Terraform Validate
       run: terraform validate
       working-directory: ${{ env.TF_WORKING_DIR }}
-
-      
+      .continue-on-error: 
     - name: Terraform Plan
       run: terraform plan
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve
       working-directory: ${{ env.TF_WORKING_DIR }}
