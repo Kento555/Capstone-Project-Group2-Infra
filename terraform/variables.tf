@@ -19,30 +19,9 @@ variable "env" {
   default     = "dev"
 }
 
-variable "zone1" {
-  type    = string
-  default = "us-east-1a"
-}
-
-variable "zone2" {
-  type    = string
-  default = "us-east-1b"
-}
-
-variable "eks_name" {
-  type    = string
-  default = "eks-cluster"
-}
-
-variable "eks_version" {
-  type    = string
-  default = "1.29"
-}
-
 variable "ecr_namespace" {
   type    = string
   default = "ecr"
-
 }
 
 variable "microservices" {
