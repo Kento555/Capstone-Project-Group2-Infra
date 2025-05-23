@@ -1,6 +1,6 @@
 # Create CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "ce-grp-2-vpc_flow_logs" {
-  name              = "/aws/vpc/${aws_vpc.ce-grp-2-vpc.id}/flow-logs"
+  name              = "/aws/vpc/${module.vpc.vpc_id}/flow-logs"
   retention_in_days = 30 # Adjust retention as needed (1-3653)
 
   tags = {
@@ -51,7 +51,7 @@ resource "aws_flow_log" "ce-grp-2-vpc_flow_log" {
   log_destination      = aws_cloudwatch_log_group.ce-grp-2-vpc_flow_logs.arn
   log_destination_type = "cloud-watch-logs"
   traffic_type         = "ALL"
-  vpc_id               = aws_vpc.ce-grp-2-vpc.id
+  vpc_id               = module.vpc.vpc_id
   iam_role_arn         = aws_iam_role.ce-grp-2-vpc_flow_log_role.arn
 
   tags = {
