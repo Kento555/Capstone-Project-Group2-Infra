@@ -33,7 +33,7 @@ variable "eks_name" {
   default = "eks-cluster"
 }
 
-variable "eks_version " {
+variable "eks_version" {
   type    = string
   default = "1.32"
 }
