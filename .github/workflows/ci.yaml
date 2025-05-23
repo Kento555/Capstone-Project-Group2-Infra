@@ -1,17 +1,8 @@
----
 name: Terraform CI
 
 on:
   pull_request:
     branches: ["main"]
-  push:
-    branches: ["main"]
-
-env:
-  AWS_REGION: "us-east-1"
-  EKS_CLUSTER_NAME: "ce-grp-2-dev-ce-grp-2-eks"
-  TERRAFORM_VERSION: "1.7.4"
-  TF_WORKING_DIR: "./terraform"
 
 jobs:
   CI:
@@ -35,8 +26,7 @@ jobs:
 
     - name: Terraform fmt
       run: terraform fmt -check
-      working-directory: ${{ env.TF_WORKING_DIR }}
-
+ 
     - uses: terraform-linters/setup-tflint@v3
       with:
         tflint_version: latest
@@ -47,23 +37,22 @@ jobs:
     - name: Init TFLint
       run: tflint --init
       working-directory: ${{ env.TF_WORKING_DIR }}
+    
 
     - name: Run TFLint
       run: tflint -f compact
       working-directory: ${{ env.TF_WORKING_DIR }}
 
-    # - name: Checkov
-    #   uses: bridgecrewio/checkov-action@master
-    #   with:
-    #     framework: terraform
 
     - name: Terraform Init
       run: terraform init
       working-directory: ${{ env.TF_WORKING_DIR }}
+
        
     - name: Terraform Validate
       run: terraform validate
       working-directory: ${{ env.TF_WORKING_DIR }}
+
       
     - name: Terraform Plan
       run: terraform plan
