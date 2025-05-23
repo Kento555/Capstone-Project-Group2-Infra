@@ -14,8 +14,9 @@ variable "aws_region" {
 }
 
 variable "env" {
-  description = "Environement"
+  description = "Environment"
   type        = string
+  default     = "dev"
 }
 
 variable "zone1" {
