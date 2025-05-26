@@ -5,7 +5,7 @@
 ## Policy for ExternalDNS to manage Route53 records
 
 resource "aws_iam_policy" "externaldns" {
-  name        = "${var.name_prefix}-ExternalDNSPolicy"
+  name        = "${var.name_prefix}-ExternalDNSPolicy-${var.env}"
   description = "Policy for ExternalDNS to manage Route53 records"
   policy = jsonencode({
     Version = "2012-10-17",
@@ -32,7 +32,7 @@ resource "aws_iam_policy" "externaldns" {
 ## IAM Role for ExternalDNS
 
 resource "aws_iam_role" "externaldns" {
-  name = "${var.name_prefix}-ExternalDNSRole"
+  name = "${var.name_prefix}-ExternalDNSRole-${var.env}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
