@@ -19,11 +19,6 @@ variable "env" {
   default     = "dev"
 }
 
-variable "ecr_namespace" {
-  type    = string
-  default = "ecr"
-}
-
 variable "microservices" {
   type = list(string)
   default = ["adservice",
