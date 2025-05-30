@@ -76,3 +76,30 @@ resource "aws_iam_policy" "dynamodb_readonly" {
     ]
   })
 }
+
+resource "aws_iam_role" "irsa_role" {
+  name = "${var.name_prefix}-irsa-role-${var.env}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Federated = data.aws_iam_openid_connect_provider.this.arn
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "${replace(data.aws_eks_cluster.this.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:app:*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_policy" {
+  role       = aws_iam_role.irsa_role.name
+  policy_arn = aws_iam_policy.dynamodb_readonly.arn
+}
