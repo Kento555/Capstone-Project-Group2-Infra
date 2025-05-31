@@ -59,6 +59,8 @@ resource "aws_iam_role_policy_attachment" "externaldns_attach" {
   policy_arn = aws_iam_policy.externaldns.arn
 }
 
+## Policy for App to access DynamoDB records
+
 resource "aws_iam_policy" "dynamodb_readonly" {
   name        = "${var.name_prefix}-EKS-DynamoDB-ReadOnly-${var.env}"
   description = "Allow read access to DynamoDB for IRSA in EKS-${var.env}"
@@ -86,12 +88,15 @@ resource "aws_iam_role" "irsa_role" {
       {
         Effect = "Allow",
         Principal = {
-          Federated = data.aws_iam_openid_connect_provider.this.arn
+          Federated = module.eks.oidc_provider_arn
         },
         Action = "sts:AssumeRoleWithWebIdentity",
         Condition = {
+          StringLike = {
+            "${module.eks.oidc_provider}:sub" = "system:serviceaccount:app:*"
+          },
           StringEquals = {
-            "${replace(data.aws_eks_cluster.this.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:app:*"
+            "${module.eks.oidc_provider}:aud" = "sts.amazonaws.com"
           }
         }
       }
