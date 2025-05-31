@@ -49,38 +49,38 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -var-file=${{ github.event.inputs.choice }}.tfvars -auto-approve
 
-  terraform-destroy-on-failure:
-    needs: terraform-create
-    if: failure()
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: terraform
+  # terraform-destroy-on-failure:
+  #   needs: terraform-create
+  #   if: failure()
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: terraform
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Print failure reason
-        run: echo "terraform-create failed — triggering destroy to clean up partial resources"
+  #     - name: Print failure reason
+  #       run: echo "terraform-create failed — triggering destroy to clean up partial resources"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: us-east-1
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.7.5
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v2
+  #       with:
+  #         terraform_version: 1.7.5
 
-      - name: Terraform Init
-        run: terraform init
+  #     - name: Terraform Init
+  #       run: terraform init
 
-      - name: Select or create workspace
-        run: |
-          terraform workspace select ${{ github.event.inputs.choice }} || terraform workspace new ${{ github.event.inputs.choice }}
+  #     - name: Select or create workspace
+  #       run: |
+  #         terraform workspace select ${{ github.event.inputs.choice }} || terraform workspace new ${{ github.event.inputs.choice }}
 
-      - name: Terraform Destroy
-        run: terraform destroy -var-file=${{ github.event.inputs.choice }}.tfvars -auto-approve
+  #     - name: Terraform Destroy
+  #       run: terraform destroy -var-file=${{ github.event.inputs.choice }}.tfvars -auto-approve
