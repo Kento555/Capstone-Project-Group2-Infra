@@ -91,6 +91,49 @@ resource "aws_cloudwatch_metric_alarm" "dlq_alarm" {
   }
 }
 
+# ============ DynamoDB Monitoring ============
+resource "aws_cloudwatch_metric_alarm" "dynamodb_throttles" {
+  alarm_name          = "${var.name_prefix}-dynamodb-throttles-${var.env}"
+  alarm_description   = "Triggers when DynamoDB orders table has throttled requests"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ThrottledRequests"
+  namespace           = "AWS/DynamoDB"
+  period              = 60  # 1-minute granularity
+  statistic           = "Sum"
+  threshold           = 1   # Alert on any throttling
+  alarm_actions       = [aws_sns_topic.lambda_alerts.arn]
+  dimensions = {
+    TableName = aws_dynamodb_table.product_orders_table.name
+    Operation = "Write"  # Monitor write throttles specifically
+  }
+  tags = {
+    Name        = "${var.name_prefix}-dynamodb-throttle-alarm-${var.env}"
+    Environment = var.env
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "dynamodb_latency" {
+  alarm_name          = "${var.name_prefix}-dynamodb-latency-${var.env}"
+  alarm_description   = "Triggers when DynamoDB write latency exceeds 500ms"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3  # 3 consecutive periods
+  metric_name         = "SuccessfulRequestLatency"
+  namespace           = "AWS/DynamoDB"
+  period              = 60  # 1 minute
+  statistic           = "Average"
+  threshold           = 500 # 500ms threshold
+  alarm_actions       = [aws_sns_topic.lambda_alerts.arn]
+  dimensions = {
+    TableName = aws_dynamodb_table.product_orders_table.name
+    Operation = "Write"
+  }
+  tags = {
+    Name        = "${var.name_prefix}-dynamodb-latency-alarm-${var.env}"
+    Environment = var.env
+  }
+}
+
 # =================== IAM Role & Policies ===================
 resource "aws_iam_role" "lambda_exec_role" {
   name = "${var.name_prefix}-lambda-exec-role-${var.env}"
