@@ -4,6 +4,8 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/checkout-lambda.zip"
 }
 
+
+#  =================== LAMBDA FUNCTION ===================
 resource "aws_lambda_function" "order_processor" {
   function_name = "${var.name_prefix}-order-processor-${var.env}"
   role          = aws_iam_role.lambda_exec_role.arn
@@ -20,6 +22,42 @@ resource "aws_lambda_function" "order_processor" {
   }
 }
 
+# =================== Email subscription ===================
+resource "aws_sns_topic_subscription" "email_alert" {
+  topic_arn = aws_sns_topic.lambda_alerts.arn
+  protocol  = "email"
+  endpoint  = "chrisyeohc@outlook.com"  # Replace with real email
+}
+
+resource "aws_sns_topic" "lambda_alerts" {
+  name = "${var.name_prefix}-lambda-alerts-${var.env}"
+  tags = {
+    Name        = "${var.name_prefix}-lambda-alerts-${var.env}"
+    Environment = var.env
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  alarm_description = "Alerts when order_processor Lambda fails to process SQS messages"
+  alarm_name          = "${var.name_prefix}-order-processor-errors-${var.env}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 300  # 5 minutes
+  statistic           = "Sum"
+  threshold           = 1    # Alert on ≥1 error
+  alarm_actions       = [aws_sns_topic.lambda_alerts.arn]
+  ok_actions          = [aws_sns_topic.lambda_alerts.arn]  # Notify when resolved
+  dimensions = {
+    FunctionName = aws_lambda_function.order_processor.function_name
+  }
+
+  tags = {
+    Name        = "${var.name_prefix}-lambda-error-alarm-${var.env}"
+    Environment = var.env
+  }
+}
 
 resource "aws_iam_role" "lambda_exec_role" {
   name = "${var.name_prefix}-lambda-exec-role-${var.env}"
