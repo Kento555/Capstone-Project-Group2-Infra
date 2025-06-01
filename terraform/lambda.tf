@@ -21,6 +21,18 @@ resource "aws_lambda_function" "order_processor" {
   }
 }
 
+# =================== DEAD LETTER QUEUE ===================
+resource "aws_sqs_queue" "order_dlq" {
+  name                      = "${var.name_prefix}-order-dlq-${var.env}.fifo"
+  fifo_queue                = true
+  content_based_deduplication = true
+  
+  tags = {
+    Name        = "${var.name_prefix}-order-dlq-${var.env}"
+    Environment = var.env
+  }
+}
+
 # =================== SNS Topic + Email Subscription ===================
 resource "aws_sns_topic" "lambda_alerts" {
   name = "${var.name_prefix}-lambda-alerts-${var.env}"
@@ -33,10 +45,10 @@ resource "aws_sns_topic" "lambda_alerts" {
 resource "aws_sns_topic_subscription" "email_alert" {
   topic_arn = aws_sns_topic.lambda_alerts.arn
   protocol  = "email"
-  endpoint  = "chrisyeohc@outlook.com"  # Replace with real email
+  endpoint  = "chrisyeohc@outlook.com"
 }
 
-# =================== CloudWatch Alarm ===================
+# =================== CloudWatch Alarms ===================
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   alarm_description   = "Alerts when order_processor Lambda fails to process SQS messages"
   alarm_name          = "${var.name_prefix}-order-processor-errors-${var.env}"
@@ -54,6 +66,27 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   }
   tags = {
     Name        = "${var.name_prefix}-lambda-error-alarm-${var.env}"
+    Environment = var.env
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "dlq_alarm" {
+  alarm_description   = "Alerts when messages are in Dead Letter Queue"
+  alarm_name          = "${var.name_prefix}-dlq-not-empty-${var.env}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  namespace           = "AWS/SQS"
+  period              = 300
+  statistic           = "Maximum"
+  threshold           = 0  # Triggers if any messages in DLQ
+  alarm_actions       = [aws_sns_topic.lambda_alerts.arn]
+  ok_actions          = [aws_sns_topic.lambda_alerts.arn]
+  dimensions = {
+    QueueName = aws_sqs_queue.order_dlq.name
+  }
+  tags = {
+    Name        = "${var.name_prefix}-dlq-alarm-${var.env}"
     Environment = var.env
   }
 }
@@ -96,6 +129,11 @@ resource "aws_iam_policy" "lambda_custom_policy" {
         Effect   = "Allow",
         Action   = ["dynamodb:PutItem"],
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.product_orders_table.name}"
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["sqs:SendMessage"],
+        Resource = aws_sqs_queue.order_dlq.arn
       }
     ]
   })
@@ -106,10 +144,17 @@ resource "aws_iam_role_policy_attachment" "lambda_custom_attach" {
   policy_arn = aws_iam_policy.lambda_custom_policy.arn
 }
 
-# =================== Event Source Mapping ===================
+# =================== EVENT SOURCE MAPPING WITH DLQ ===================
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
-  event_source_arn = aws_sqs_queue.order_queue.arn
-  function_name    = aws_lambda_function.order_processor.arn
-  batch_size       = 1
-  enabled          = true
+  event_source_arn       = aws_sqs_queue.order_queue.arn
+  function_name         = aws_lambda_function.order_processor.arn
+  batch_size            = 1
+  enabled               = true
+  function_response_types = ["ReportBatchItemFailures"]
+  
+  destination_config {
+    on_failure {
+      destination_arn = aws_sqs_queue.order_dlq.arn
+    }
+  }
 }
