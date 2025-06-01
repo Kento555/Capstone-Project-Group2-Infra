@@ -4,8 +4,7 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/checkout-lambda.zip"
 }
 
-
-#  =================== LAMBDA FUNCTION ===================
+# =================== LAMBDA FUNCTION ===================
 resource "aws_lambda_function" "order_processor" {
   function_name = "${var.name_prefix}-order-processor-${var.env}"
   role          = aws_iam_role.lambda_exec_role.arn
@@ -22,13 +21,7 @@ resource "aws_lambda_function" "order_processor" {
   }
 }
 
-# =================== Email subscription ===================
-resource "aws_sns_topic_subscription" "email_alert" {
-  topic_arn = aws_sns_topic.lambda_alerts.arn
-  protocol  = "email"
-  endpoint  = "chrisyeohc@outlook.com"  # Replace with real email
-}
-
+# =================== SNS Topic + Email Subscription ===================
 resource "aws_sns_topic" "lambda_alerts" {
   name = "${var.name_prefix}-lambda-alerts-${var.env}"
   tags = {
@@ -37,28 +30,35 @@ resource "aws_sns_topic" "lambda_alerts" {
   }
 }
 
+resource "aws_sns_topic_subscription" "email_alert" {
+  topic_arn = aws_sns_topic.lambda_alerts.arn
+  protocol  = "email"
+  endpoint  = "chrisyeohc@outlook.com"  # Replace with real email
+}
+
+# =================== CloudWatch Alarm ===================
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  alarm_description = "Alerts when order_processor Lambda fails to process SQS messages"
+  alarm_description   = "Alerts when order_processor Lambda fails to process SQS messages"
   alarm_name          = "${var.name_prefix}-order-processor-errors-${var.env}"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Errors"
   namespace           = "AWS/Lambda"
-  period              = 300  # 5 minutes
+  period              = 300
   statistic           = "Sum"
-  threshold           = 1    # Alert on ≥1 error
+  threshold           = 1
   alarm_actions       = [aws_sns_topic.lambda_alerts.arn]
-  ok_actions          = [aws_sns_topic.lambda_alerts.arn]  # Notify when resolved
+  ok_actions          = [aws_sns_topic.lambda_alerts.arn]
   dimensions = {
     FunctionName = aws_lambda_function.order_processor.function_name
   }
-
   tags = {
     Name        = "${var.name_prefix}-lambda-error-alarm-${var.env}"
     Environment = var.env
   }
 }
 
+# =================== IAM Role & Policies ===================
 resource "aws_iam_role" "lambda_exec_role" {
   name = "${var.name_prefix}-lambda-exec-role-${var.env}"
 
@@ -106,6 +106,7 @@ resource "aws_iam_role_policy_attachment" "lambda_custom_attach" {
   policy_arn = aws_iam_policy.lambda_custom_policy.arn
 }
 
+# =================== Event Source Mapping ===================
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn = aws_sqs_queue.order_queue.arn
   function_name    = aws_lambda_function.order_processor.arn
