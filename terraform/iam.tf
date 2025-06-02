@@ -142,24 +142,24 @@ resource "aws_iam_policy" "loki_s3" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
-        {
-            Sid = "LokiStorage",
-            Effect = "Allow",
-            Action = [
-                "s3:ListBucket",
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:DeleteObject"
-            ],
-            Resource = [
-                "${aws_s3_bucket.chunks.arn}",
-                "${aws_s3_bucket.chunks.arn}/*",
-                "${aws_s3_bucket.ruler.arn}",
-                "${aws_s3_bucket.ruler.arn}/*"
-            ]
-        }
+      {
+        Sid    = "LokiStorage",
+        Effect = "Allow",
+        Action = [
+          "s3:ListBucket",
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ],
+        Resource = [
+          "${aws_s3_bucket.chunks.arn}",
+          "${aws_s3_bucket.chunks.arn}/*",
+          "${aws_s3_bucket.ruler.arn}",
+          "${aws_s3_bucket.ruler.arn}/*"
+        ]
+      }
     ]
-})
+  })
 }
 
 resource "aws_iam_role" "loki_s3" {
@@ -168,21 +168,21 @@ resource "aws_iam_role" "loki_s3" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
-        {
-            Effect = "Allow",
-            Principal = {
-                Federated = module.eks.oidc_provider_arn
-            },
-            Action = "sts:AssumeRoleWithWebIdentity",
-            Condition = {
-                StringEquals = {
-                    "${module.eks.oidc_provider}:sub": "system:serviceaccount:monitoring:loki",
-                    "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
-                }
-            }
+      {
+        Effect = "Allow",
+        Principal = {
+          Federated = module.eks.oidc_provider_arn
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "${module.eks.oidc_provider}:sub" : "system:serviceaccount:monitoring:loki",
+            "${module.eks.oidc_provider}:aud" : "sts.amazonaws.com"
+          }
         }
+      }
     ]
-})
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "loki_s3_attach" {
