@@ -1,35 +1,48 @@
----
 name: Terraform Destruction
 
 on:
-  workflow_dispatch: # Manual trigger only
-
-env:            
-  AWS_REGION: us-east-1  
-  TF_WORKING_DIR: ./terraform
+  workflow_dispatch:
+    inputs:
+      choice:
+        type: choice
+        description: Select the environment
+        options:
+          - dev
+          - uat
+          - prod
 
 jobs:
   destroy:
     runs-on: ubuntu-latest
-    environment: production-destroy  # Ties to the protected environment
+    defaults:
+      run:
+        working-directory: terraform
+
+
     steps:
-     - name: Checkout code
-       uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Print environment
+        run: echo "env choice is ${{ github.event.inputs.choice }}"
     
-     - name: Configure AWS credentials
-       uses: aws-actions/configure-aws-credentials@v4
-       with:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
 
-     - name: Setup Terraform
-       uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
 
-     - name: Terraform Init
-       run: terraform init
-       working-directory: ${{ env.TF_WORKING_DIR }}
+      - name: Terraform Init
+        run: terraform init
 
-     - name: Terraform Destroy
-       run: terraform destroy -auto-approve
-       working-directory: ${{ env.TF_WORKING_DIR }}
+      - name: Select or create workspace
+        run: |
+          terraform workspace select ${{ github.event.inputs.choice }} || terraform workspace new ${{ github.event.inputs.choice }}
+
+      - name: Terraform Destroy
+        run: terraform destroy -var-file=${{ github.event.inputs.choice }}.tfvars -auto-approve
