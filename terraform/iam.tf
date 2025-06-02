@@ -93,7 +93,7 @@ resource "aws_iam_role" "irsa_role" {
         Action = "sts:AssumeRoleWithWebIdentity",
         Condition = {
           StringLike = {
-            "${module.eks.oidc_provider}:sub" = "system:serviceaccount:app:*"
+            "${module.eks.oidc_provider}:sub" = "system:serviceaccount:app-capstone:*"
           },
           StringEquals = {
             "${module.eks.oidc_provider}:aud" = "sts.amazonaws.com"
