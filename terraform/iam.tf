@@ -152,9 +152,9 @@ resource "aws_iam_policy" "loki_s3" {
           "s3:DeleteObject"
         ],
         Resource = [
-          "${aws_s3_bucket.chunks.arn}",
+          aws_s3_bucket.chunks.arn,
           "${aws_s3_bucket.chunks.arn}/*",
-          "${aws_s3_bucket.ruler.arn}",
+          aws_s3_bucket.ruler.arn,
           "${aws_s3_bucket.ruler.arn}/*"
         ]
       }
