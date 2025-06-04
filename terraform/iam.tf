@@ -135,127 +135,127 @@ resource "aws_iam_role_policy_attachment" "attach_eventbridge_policy" {
 }
 
 
-# IAM Role for Loki to access S3
-resource "aws_iam_policy" "loki_s3" {
-  name        = "${var.name_prefix}-LokiS3Policy-${var.env}"
-  description = "Policy for Loki to access S3 buckets for chunks and ruler storage"
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid    = "LokiStorage",
-        Effect = "Allow",
-        Action = [
-          "s3:ListBucket",
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:DeleteObject"
-        ],
-        Resource = [
-          aws_s3_bucket.chunks.arn,
-          "${aws_s3_bucket.chunks.arn}/*",
-          aws_s3_bucket.ruler.arn,
-          "${aws_s3_bucket.ruler.arn}/*"
-        ]
-      }
-    ]
-  })
-}
+# # IAM Role for Loki to access S3
+# resource "aws_iam_policy" "loki_s3" {
+#   name        = "${var.name_prefix}-LokiS3Policy-${var.env}"
+#   description = "Policy for Loki to access S3 buckets for chunks and ruler storage"
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Sid    = "LokiStorage",
+#         Effect = "Allow",
+#         Action = [
+#           "s3:ListBucket",
+#           "s3:PutObject",
+#           "s3:GetObject",
+#           "s3:DeleteObject"
+#         ],
+#         Resource = [
+#           aws_s3_bucket.chunks.arn,
+#           "${aws_s3_bucket.chunks.arn}/*",
+#           aws_s3_bucket.ruler.arn,
+#           "${aws_s3_bucket.ruler.arn}/*"
+#         ]
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_role" "loki_s3" {
-  name = "${var.name_prefix}-LokiS3-${var.env}"
+# resource "aws_iam_role" "loki_s3" {
+#   name = "${var.name_prefix}-LokiS3-${var.env}"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        },
-        Action = "sts:AssumeRoleWithWebIdentity",
-        Condition = {
-          StringEquals = {
-            "${module.eks.oidc_provider}:sub" : "system:serviceaccount:monitoring:loki",
-            "${module.eks.oidc_provider}:aud" : "sts.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect = "Allow",
+#         Principal = {
+#           Federated = module.eks.oidc_provider_arn
+#         },
+#         Action = "sts:AssumeRoleWithWebIdentity",
+#         Condition = {
+#           StringEquals = {
+#             "${module.eks.oidc_provider}:sub" : "system:serviceaccount:monitoring:loki",
+#             "${module.eks.oidc_provider}:aud" : "sts.amazonaws.com"
+#           }
+#         }
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_role_policy_attachment" "loki_s3_attach" {
-  role       = aws_iam_role.loki_s3.name
-  policy_arn = aws_iam_policy.loki_s3.arn
-}
+# resource "aws_iam_role_policy_attachment" "loki_s3_attach" {
+#   role       = aws_iam_role.loki_s3.name
+#   policy_arn = aws_iam_policy.loki_s3.arn
+# }
 
-# IAM Role and Policies for Cluster Autoscaler to manage ASG in EKS Cluster
+# # IAM Role and Policies for Cluster Autoscaler to manage ASG in EKS Cluster
 
-resource "aws_iam_policy" "cluster_autoscaler" {
-  name        = "${var.name_prefix}-ClusterAutoScalerPolicy-${var.env}"
-  description = "Policy for Cluster Autoscaler to manage Auto Scaling Groups in cluster"
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "autoscaling:SetDesiredCapacity",
-          "autoscaling:TerminateInstanceInAutoScalingGroup"
-        ],
-        Resource = "*",
-        Condition = {
-          StringEquals = {
-            "aws:ResourceTag/k8s.io/cluster-autoscaler/enabled"                    = "true",
-            "aws:ResourceTag/k8s.io/cluster-autoscaler/${module.eks.cluster_name}" = "owned"
-          }
-        }
-      },
-      {
-        Effect = "Allow",
-        Action = [
-          "autoscaling:DescribeAutoScalingGroups",
-          "autoscaling:DescribeAutoScalingInstances",
-          "autoscaling:DescribeLaunchConfigurations",
-          "autoscaling:DescribeScalingActivities",
-          "autoscaling:DescribeTags",
-          "ec2:DescribeImages",
-          "ec2:DescribeInstanceTypes",
-          "ec2:DescribeLaunchTemplateVersions",
-          "ec2:GetInstanceTypesFromInstanceRequirements",
-          "eks:DescribeNodegroup"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
+# resource "aws_iam_policy" "cluster_autoscaler" {
+#   name        = "${var.name_prefix}-ClusterAutoScalerPolicy-${var.env}"
+#   description = "Policy for Cluster Autoscaler to manage Auto Scaling Groups in cluster"
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect = "Allow",
+#         Action = [
+#           "autoscaling:SetDesiredCapacity",
+#           "autoscaling:TerminateInstanceInAutoScalingGroup"
+#         ],
+#         Resource = "*",
+#         Condition = {
+#           StringEquals = {
+#             "aws:ResourceTag/k8s.io/cluster-autoscaler/enabled"                    = "true",
+#             "aws:ResourceTag/k8s.io/cluster-autoscaler/${module.eks.cluster_name}" = "owned"
+#           }
+#         }
+#       },
+#       {
+#         Effect = "Allow",
+#         Action = [
+#           "autoscaling:DescribeAutoScalingGroups",
+#           "autoscaling:DescribeAutoScalingInstances",
+#           "autoscaling:DescribeLaunchConfigurations",
+#           "autoscaling:DescribeScalingActivities",
+#           "autoscaling:DescribeTags",
+#           "ec2:DescribeImages",
+#           "ec2:DescribeInstanceTypes",
+#           "ec2:DescribeLaunchTemplateVersions",
+#           "ec2:GetInstanceTypesFromInstanceRequirements",
+#           "eks:DescribeNodegroup"
+#         ],
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_role" "cluster_autoscaler" {
-  name = "${var.name_prefix}-ClusterAutoScaler-${var.env}"
+# resource "aws_iam_role" "cluster_autoscaler" {
+#   name = "${var.name_prefix}-ClusterAutoScaler-${var.env}"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        },
-        Action = "sts:AssumeRoleWithWebIdentity",
-        Condition = {
-          StringEquals = {
-            "${module.eks.oidc_provider}:sub" : "system:serviceaccount:kube-system:cluster-autoscaler",
-            "${module.eks.oidc_provider}:aud" : "sts.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect = "Allow",
+#         Principal = {
+#           Federated = module.eks.oidc_provider_arn
+#         },
+#         Action = "sts:AssumeRoleWithWebIdentity",
+#         Condition = {
+#           StringEquals = {
+#             "${module.eks.oidc_provider}:sub" : "system:serviceaccount:kube-system:cluster-autoscaler",
+#             "${module.eks.oidc_provider}:aud" : "sts.amazonaws.com"
+#           }
+#         }
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_role_policy_attachment" "cluster_autoscaler_attach" {
-  role       = aws_iam_role.cluster_autoscaler.name
-  policy_arn = aws_iam_policy.cluster_autoscaler.arn
-}
+# resource "aws_iam_role_policy_attachment" "cluster_autoscaler_attach" {
+#   role       = aws_iam_role.cluster_autoscaler.name
+#   policy_arn = aws_iam_policy.cluster_autoscaler.arn
+# }
